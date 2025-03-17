@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &478762759767758911
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 740443683848396245}
+  - component: {fileID: 2952111081920601821}
+  m_Layer: 0
+  m_Name: Map Generator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &740443683848396245
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478762759767758911}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2952111081920601821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478762759767758911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bae43c421bfaa954f904244204388a80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FOWPrefab: {fileID: 1404857153047261286, guid: 8b5d64b9567f07142acd7b67c041506e, type: 3}
+  RockPrefab: {fileID: 6266204113299830653, guid: 4eac87b9e7ec3c4449b6a2740cb6d7a4, type: 3}
+  DirtPrefab: {fileID: 5507504990355481226, guid: 9236d22ca8c68f34f903e23fc7b888c2, type: 3}
+  CoalPrefab: {fileID: 1481190262463374169, guid: aeba0515f1704604aa1841a178228e3a, type: 3}
+  mapWidth: 20
+  mapHeight: 20
+  blockSize: 2
