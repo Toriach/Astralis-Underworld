@@ -6,7 +6,7 @@ namespace Assets.Astralis_Underworld.Scripts
     public static class GameConstants 
     {
         public static float GridSize = 0.5f;
-        public static int ChunkSizeInBlocks = 6;//6
+        public static int ChunkSizeInBlocks = 16;//6
         public static int VerticalBlocksInChunk = 4;//4
         public static int RegionSizeInChunks = 3;//3
     

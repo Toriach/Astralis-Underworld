@@ -3,6 +3,7 @@ using Assets.Astralis_Underworld.Scripts;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Assets.Astralis_Underworld.Evirnoment.Scripts
 {
@@ -47,9 +48,28 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts
 
         public void SetUpBlock()
         {
-            NoiseValue = Perlin3DNoise.Get3DNoiseAt(Position.x, Position.y, Position.z, 0, 0.8f, 1.25f, 0.2f);
+            float scale = 0.09f;// 0.09f
+            int octaves = 2;//2f
+            float lacunarity = 2f;//2f
+            float gain = 0.7f;//0.7f
+            float threshold = 0.77f;// > 0.77f
 
-            if (NoiseValue >= 0.5f) IsDestroyed = true;
+            // tunels
+            if (RidgeNoise.GetValue(Position.x, Position.z, GameConstants.WorldSeed, scale, octaves, lacunarity, gain) > threshold)
+                IsDestroyed = true;
+
+            float Cscale = 0.10f;// 0.08f
+            float Cgain = 0.5f;//0.5f
+            float Cthreshold = 0.33f;// > 0.35f
+            float verticalBias = 0.35f; // min:0.2f max:0.7f sweet spot 0.35f
+
+            // caves         
+            if (RidgeNoise.GetValue3D(Position.x, Position.y, Position.z, GameConstants.WorldSeed,
+                Cscale, octaves, lacunarity, Cgain, verticalBias) > Cthreshold)
+                IsDestroyed = true;
+
+            //  NoiseValue = Perlin3DNoise.Get3DNoiseAt(Position.x, Position.y, Position.z, 0, 0.8f, 1.25f, 0.2f);
+            // if (NoiseValue >= 0.5f) IsDestroyed = true;
         }
 
         public void ReCreateVertices(int tessellationScale)
