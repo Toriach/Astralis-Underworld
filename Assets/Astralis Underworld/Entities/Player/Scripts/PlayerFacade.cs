@@ -13,7 +13,7 @@ namespace Assets.Astralis_Underworld.Entities.Player.Scripts
         public event Action OnInitDone;
         public PlayerAnimatorController AnimatorController { get; private set; }
         public AnimationListener AnimationListener { get; private set; }
-        public BlockDetector RockDetector { get; private set; }
+        public ChunkDetector ChunkDetector { get; private set; }
 
         public HitTrigger HitTrigger { get; private set; }
 
@@ -24,7 +24,7 @@ namespace Assets.Astralis_Underworld.Entities.Player.Scripts
             AnimatorController = GetComponent<PlayerAnimatorController>();
 
             AnimationListener = GetComponentInChildren<AnimationListener>();
-            RockDetector = GetComponentInChildren<BlockDetector>();
+            ChunkDetector = GetComponentInChildren<ChunkDetector>();
             HitTrigger = GetComponentInChildren<HitTrigger>();
             playerMining = GetComponent<PlayerMining>();
 

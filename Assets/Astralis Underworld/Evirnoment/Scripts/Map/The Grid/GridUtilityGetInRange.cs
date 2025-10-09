@@ -61,7 +61,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             return cellsInRange;
         }
 
-        public static GridCell FinsGridCellByPosition(Vector3 position)
+        public static GridCell FindGridCellByPosition(Vector3 position)
         {
             var region = GetRegion(position);
             if (region == null) return null;
