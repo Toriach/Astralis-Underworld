@@ -89,7 +89,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             blocksUvs = new List<Vector2>();
 
             TesselationScale = GameConstants.tessellationScale;
-            ReGenerateMesh();
+            GenerateMesh();
         }
 
         private void ReCheckBlockSides()
@@ -127,57 +127,11 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             string newCellName = string.Format("Cell: {0} - {1}", cellX, cellZ);
 
             GridCell newCell = GridCellDataGenerator.GenerateGridCellData(newCellName, cellPosition, _chunkLocalX,
-                _chunkLocalY, cellXIndex, cellZIndex, TesselationScale);
+                _chunkLocalY, cellXIndex, cellZIndex, TesselationScale, ChunkPosition);
 
             return newCell;
         }
-
-        /*private void CreateMatrixArrays()
-        {
-            blockMatrixlist.Clear();
-            List<Matrix4x4> matrixListStone = new List<Matrix4x4>();
-            List<Matrix4x4> matrixListCoal = new List<Matrix4x4>();
-            for (int i = 0; i < Cells.Count; i++)
-            {
-                if (Cells[i].IsEmpty) continue;
-
-                for (int j = 0; j < Cells[i].blocks.Length; j++)
-                {
-                    if (Cells[i].blocks[j].IsDestroyed) continue;
-                    switch (Cells[i].blocks[j].MaterialID)
-                    {
-                        case 0:
-                            matrixListStone.Add(Cells[i].blocks[j].matrix);
-                            break;
-                        case 1:
-                            matrixListCoal.Add(Cells[i].blocks[j].matrix);
-                            break;
-                    }
-                }
-            }
-
-            Matrix4x4[] array = new Matrix4x4[matrixListStone.Count];
-            Matrix4x4[] arrayCoal = new Matrix4x4[matrixListCoal.Count];
-            array = matrixListStone.ToArray();
-            arrayCoal = matrixListCoal.ToArray();
-            blockMatrixlist.Add(array);
-            blockMatrixlist.Add(arrayCoal);
-            //  _chunkBlocksDrawer.UpdateChunkDrawData(blockMatrixlist);
-        }*/
-
-/*        private void Update()
-        {
-            _frameSkipped++;
-            if (_frameSkipped < 60) return;
-            _frameSkipped = 0;
-           // RemoveRandomCell();
-          //  if (RecreateUpdate == false) return;
-          //  GenerateMesh();
-            // CreateMatrixArrays();
-        }*/
-
-        [ContextMenu("RE Generate mesh")]
-        public void ReGenerateMesh()
+        public void GenerateMesh()
         {
             ReCheckBlockSides();
             foreach (var cell in Cells)
@@ -185,63 +139,57 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
                 cell.UpdateVerticesInBlocks(TesselationScale);
             }
 
-            ModifyVertsOnCellBlocks();
-            GenerateMesh();
+          //  ModifyVertsOnCellBlocks();
+            GenerateChunkMesh();
         }
 
-        [ContextMenu("Generate mesh")]
-        private void GenerateMesh()
+        private void GenerateChunkMesh()
         {
             _mesh.Clear();
-            if (RecreateUpdate == false)
+
+            blocksVerts.Clear();
+            blocksTriangles.Clear();
+            blocksUvs.Clear();
+
+            int vertexOffset = 0;
+
+            foreach (var cell in Cells)
             {
-                blocksVerts.Clear();
-                blocksTriangles.Clear();
-                blocksUvs.Clear();
-
-                int index = 0;
-                for (int i = 0; i < Cells.Count; i++)
+                foreach (var block in cell.blocks)
                 {
-                    for (int y = 0; y < Cells[i].blocks.Length; y++)
+                    if (block.IsDestroyed) continue;
+
+                    foreach (var face in block.blockFaces)
                     {
-                        if (Cells[i].blocks[y].IsDestroyed) continue;
-                        for (int j = 0; j < Cells[i].blocks[y].Vertices.Count; j++)
-                        {
-                            blocksVerts.Add(Cells[i].blocks[y].Vertices[j]);
-                            blocksUvs.Add(Cells[i].blocks[y].uvs[j]);
-                        }
+                        if (face.Vertices.Count == 0) continue;
 
-                        Cells[i].blocks[y].CreateTriangles(index);
+                        // dodanie vertexów i UV
+                        blocksVerts.AddRange(face.Vertices);
+                        blocksUvs.AddRange(face.UVs);
 
-                        for (int j = 0; j < Cells[i].blocks[y].Triangles.Count; j++)
-                        {
-                            blocksTriangles.Add(Cells[i].blocks[y].Triangles[j]);
-                        }
+                        var tris = block.CreateTrianglesForFace(face, vertexOffset);
+                        blocksTriangles.AddRange(tris);
 
-                        index += Cells[i].blocks[y].Vertices.Count;
+                        vertexOffset += face.Vertices.Count;
                     }
                 }
             }
 
-            //ModifyVerts();
-
             _mesh.vertices = blocksVerts.ToArray();
             _mesh.triangles = blocksTriangles.ToArray();
 
-            if (_mesh.triangles.Length <= 0) return;
+            if (_mesh.triangles.Length > 0)
+            {
+                _mesh.uv = blocksUvs.ToArray();
+                _mesh.RecalculateNormals();
+            }
 
-            _mesh.uv = blocksUvs.ToArray();
-            _mesh.RecalculateNormals();
-            _meshCollider.sharedMesh = _mesh;
-        }
+            if (_mesh.vertexCount <= 0)
+            {
+                _meshCollider.sharedMesh = null;
+                return;
+            }
 
-        private void UpdateMesh()
-        {
-            _mesh.Clear();
-            _mesh.vertices = blocksVerts.ToArray();
-            _mesh.triangles = blocksTriangles.ToArray();
-            _mesh.uv = blocksUvs.ToArray();
-            _mesh.RecalculateNormals();
             _meshCollider.sharedMesh = _mesh;
         }
 
@@ -254,33 +202,36 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             {
                 foreach (var block in cell.blocks)
                 {
-                    for (int i = 0; i < block.Vertices.Count; i++)
+                    foreach (var face in block.blockFaces)
                     {
-                        var noisePos = (block.Vertices[i] + ChunkPosition) * gridSize;
+                        for (int i = 0; i < face.Vertices.Count; i++)
+                        {
+                            var noisePos = (face.Vertices[i] + ChunkPosition) * gridSize;
 
-                        var noiseValue = Perlin3DNoise.Get3DNoiseAt(noisePos.x, noisePos.y, noisePos.z, 0, 0.95f, 1.05f,
-                            displacmentNoise);
-                        noiseValue -= 0.5f;
+                            var noiseValue = Perlin3DNoise.Get3DNoiseAt(noisePos.x, noisePos.y, noisePos.z, 0, 0.95f, 1.05f,
+                                displacmentNoise);
+                            noiseValue -= 0.5f;
 
-                        var offset = new Vector3(noiseValue, 0, noiseValue);
+                            var offset = new Vector3(noiseValue, 0, noiseValue);
 
-                        block.Vertices[i] += offset;
+                            face.Vertices[i] += offset;
+                        }
                     }
                 }
             }
         }
 
-        private void RemoveRandomCell()
-        {
-            int random = UnityEngine.Random.Range(0, Cells.Count - 1);
-            Debug.DrawRay(Cells[random].CellPosition,Vector3.up * 3,Color.green,1);
-            foreach(var block in Cells[random].blocks)
-            {
-                block.IsDestroyed = true;
-            }
-            RecreateUpdate = false;
-            ReGenerateMesh();
-        }
+        /*        private void RemoveRandomCell()
+                {
+                    int random = UnityEngine.Random.Range(0, Cells.Count - 1);
+                    Debug.DrawRay(Cells[random].CellPosition,Vector3.up * 3,Color.green,1);
+                    foreach(var block in Cells[random].blocks)
+                    {
+                        block.IsDestroyed = true;
+                    }
+                    RecreateUpdate = false;
+                    ReGenerateMesh();
+                }*/
         /*public void Hit(Transform playerTransform, float maxDistance, float miningPower)
         {
             var cellsInRange = GetCellsInDistanceFromPlayer(maxDistance, playerTransform);
@@ -313,19 +264,19 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             }
             UpdateMesh();
         }*/
-        public void Hit(Transform playerTransform, float maxDistance, float miningPower)
-        {
-            RecreateUpdate = false;
-            var cellsInRange = GetCellsInDistanceFromPlayer(maxDistance * 2, playerTransform);
-            foreach (var cell in cellsInRange)
-            {
-                //Debug.DrawRay(cell.CellPosition, Vector3.up * 10, Color.red, 1f);
-                cell.DestroyBlocksFromTop(3);
+        /*        public void Hit(Transform playerTransform, float maxDistance, float miningPower)
+                {
+                    RecreateUpdate = false;
+                    var cellsInRange = GetCellsInDistanceFromPlayer(maxDistance * 2, playerTransform);
+                    foreach (var cell in cellsInRange)
+                    {
+                        //Debug.DrawRay(cell.CellPosition, Vector3.up * 10, Color.red, 1f);
+                       // cell.DestroyBlocksFromTop(3);
 
-            }
-            RecreateUpdate = false;
-            ReGenerateMesh();
-        }
+                    }
+                    RecreateUpdate = false;
+                    ReGenerateMesh();
+                }*/
 
         /*     public void Hit(Transform playerTransform, float maxDistance, float miningPower) // newest
          {

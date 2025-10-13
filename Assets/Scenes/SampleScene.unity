@@ -2147,11 +2147,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7593121200541446045, guid: 801824c065dc0184bb2d22759d411c43,
         type: 3}
-      propertyPath: MapSeed
-      value: 125
-      objectReference: {fileID: 0}
-    - target: {fileID: 7593121200541446045, guid: 801824c065dc0184bb2d22759d411c43,
-        type: 3}
       propertyPath: RegionSize
       value: 75
       objectReference: {fileID: 0}
@@ -2270,7 +2265,7 @@ PrefabInstance:
     - target: {fileID: 1325043090611516044, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}
       propertyPath: miningPower
-      value: 8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1325043090611516044, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}
@@ -2320,7 +2315,7 @@ PrefabInstance:
     - target: {fileID: 3830284869547077125, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8
+      value: 4.87
       objectReference: {fileID: 0}
     - target: {fileID: 3830284869547077125, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}
@@ -2330,7 +2325,7 @@ PrefabInstance:
     - target: {fileID: 3830284869547077125, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 8
+      value: 6.61
       objectReference: {fileID: 0}
     - target: {fileID: 3830284869547077125, guid: f8ae466bdbb99714ab3a04bbc1bd29ff,
         type: 3}

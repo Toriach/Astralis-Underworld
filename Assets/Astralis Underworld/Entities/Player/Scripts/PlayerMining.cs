@@ -60,12 +60,12 @@ namespace Assets.Astralis_Underworld.Entities.Player.Scripts
 
             foreach (var cell in cellsInMiningRange)
             {
-                cell.DestroyBlocksFromTop(miningPower);
+                cell.DestroyBlocksFromTop(miningPower, _hitPointPos);
             }
 
             foreach (var chunk in chunks)
             {
-                chunk.ReGenerateMesh();
+                chunk.GenerateMesh();
             }
         }
         public List<GridCell> GetCellsInMiningDistance(List<GridChunk> chunks, float distance)
@@ -103,41 +103,3 @@ namespace Assets.Astralis_Underworld.Entities.Player.Scripts
         }
     }
 }
-
-
-/*
-private GridCell _detectedCell;
-
-private void Awake()
-{
-    _player = PlayerFacade.instance;
-    _player.OnInitDone += Init;
-}
-
-private void Init()
-{
-    _player.OnInitDone -= Init;
-
-    _player.AnimationListener.OnHit += OnAnimationHit;
-}
-
-private void OnAnimationHit()
-{
-    if (_detectedCell.IsEmpty) return;
-
-    _detectedCell.DestroyBlocksFromTop(miningPower);
-    var playerPosForward = _player.transform.position + _player.transform.forward * GameConstants.GridSize;
-
-    var reg = GridUtilityGetInRange.GetRegion(playerPosForward);
-    var chunk = GridUtilityGetInRange.FindChunkAt(playerPosForward, reg);
-    chunk.ReGenerateMesh();
-}
-
-public void SetDetectedCell(GridCell detectedCell) { _detectedCell = detectedCell; }
-
-private void OnDestroy()
-{
-    _player.OnInitDone -= Init;
-
-    _player.AnimationListener.OnHit -= OnAnimationHit;
-}*/

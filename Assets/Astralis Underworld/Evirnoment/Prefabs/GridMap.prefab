@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c773acf20728dd64aaea6bf84ee011b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MapSeed: 0
+  MapSeed: 56800
   regions: []
   GridsNearPlayer: []
   RegionPlayerIsIn: {fileID: 0}
@@ -64,4 +64,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rangeForChunk: 3
   rangeForCells: 3
-  objectWithCollider: {fileID: 5419702783713838156, guid: 76d5d9200f4b6f54181a927a1e9f82df, type: 3}
+  objectWithCollider: {fileID: 5419702783713838156, guid: 76d5d9200f4b6f54181a927a1e9f82df,
+    type: 3}

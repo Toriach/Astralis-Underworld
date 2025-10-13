@@ -1,9 +1,9 @@
-﻿using Assets.Astralis_Underworld.Entities.Player.Scripts;
+﻿using Assets.Astralis_Underworld.Evirnoment.Scripts.Map;
 using Assets.Astralis_Underworld.Scripts;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Assets.Astralis_Underworld.Evirnoment.Scripts
 {
@@ -18,12 +18,9 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts
         public int MaterialID;
         public bool IsDestroyed = false;
 
-        public List<Vector3> Vertices = new List<Vector3>();
-        public List<int> Triangles = new List<int>();
-        public List<Vector2> uvs = new List<Vector2>();
+        public List<BlockFace> blockFaces = new List<BlockFace>();
 
         public int TesselationScale = 1;
-        public int indexOffset = 0;
 
         public bool HaveTop;
         public bool HaveUp;
@@ -31,13 +28,14 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts
         public bool HaveLeft;
         public bool HaveRight;
 
-        public int Health = 5;
+        public int MaxHealth = 5;
+
+        private int Health = 1;
 
         private int _cellXIndex;
         private int _cellZIndex;
         private int _yIndexInCell;
 
-        private int sides;
         public BlockData(int cellXIndex, int cellZIndex, int yIndexInCell, int tesselationScale = 1)
         {
             _cellXIndex = cellXIndex;
@@ -48,6 +46,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts
 
         public void SetUpBlock()
         {
+            Health = MaxHealth;
             float scale = 0.09f;// 0.09f
             int octaves = 2;//2f
             float lacunarity = 2f;//2f
@@ -67,206 +66,154 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts
             if (RidgeNoise.GetValue3D(Position.x, Position.y, Position.z, GameConstants.WorldSeed,
                 Cscale, octaves, lacunarity, Cgain, verticalBias) > Cthreshold)
                 IsDestroyed = true;
-
-            //  NoiseValue = Perlin3DNoise.Get3DNoiseAt(Position.x, Position.y, Position.z, 0, 0.8f, 1.25f, 0.2f);
-            // if (NoiseValue >= 0.5f) IsDestroyed = true;
         }
 
         public void ReCreateVertices(int tessellationScale)
         {
             if (IsDestroyed) return;
             TesselationScale = tessellationScale;
-            Vertices.Clear();
             CreateVertices(_cellXIndex, _cellZIndex, _yIndexInCell);
-            SetUVs(GameConstants.tessellationScale);
-        }
-
-        public void SetAllSidesTo(bool value)
-        {
-            HaveTop = value;
-            HaveUp = value;
-            HaveDown = value;
-            HaveLeft = value;
-            HaveRight = value;
         }
 
         public void CreateVertices(int cellXIndex, int cellZIndex, int yIndexInCell)
         {
-            var blockSize = GameConstants.GridSize;
+            float blockSize = (float)GameConstants.GridSize;
+            float x = cellXIndex * blockSize;
+            float z = cellZIndex * blockSize;
+            float y = yIndexInCell * blockSize;
 
-            var x = cellXIndex * blockSize;
-            var z = cellZIndex * blockSize;
-            var y = yIndexInCell * blockSize;
+            float tesselatedBlockSize = blockSize / (float)TesselationScale;
 
-            var tesselatedBlockSize = blockSize / TesselationScale;
-            sides = 0;
+            List<BlockFace> newFaces = new List<BlockFace>();
 
-            if (HaveTop)
+            BlockFace GetExistingFace(FaceDirection dir)
             {
-                for (var i = 0; i < TesselationScale + 1; i++)
-                {
-                    for (var j = 0; j < TesselationScale + 1; j++)
-                    {
-                        Vertices.Add(new Vector3(x + i * tesselatedBlockSize, y + blockSize,
-                            z + j * tesselatedBlockSize));
-                    }
-                }
-                sides++;
+                if (blockFaces == null) return null;
+                return blockFaces.FirstOrDefault(f => f.Direction == dir);
             }
 
-            if (HaveLeft)
+            void AddFace(FaceDirection dir, Func<int, int, Vector3> vertexFunc, bool visible)
             {
-                for (int i = 0; i < TesselationScale + 1; i++)
-                {
-                    for (int j = 0; j < TesselationScale + 1; j++)
-                    {
-                        Vertices.Add(new Vector3(x, y + i * tesselatedBlockSize,
-                            z + j * tesselatedBlockSize));
-                    }
-                }
-                sides++;
-            }
+                if (!visible) return;
 
-            if (HaveRight)
-            {
-                for (int i = 0; i < TesselationScale + 1; i++)
-                {
-                    for (int j = 0; j < TesselationScale + 1; j++)
-                    {
-                        Vertices.Add(new Vector3(x + blockSize, y + j * tesselatedBlockSize,
-                            z + i * tesselatedBlockSize));
-                    }
-                }
-                sides++;
-            }
+                var existing = GetExistingFace(dir);
+                var face = new BlockFace { Direction = dir };
 
-            if (HaveDown)
-            {
-                for (int i = 0; i < TesselationScale + 1; i++)
-                {
-                    for (int j = 0; j < TesselationScale + 1; j++)
-                    {
-                        Vertices.Add(new Vector3(x + i * tesselatedBlockSize,
-                            y + j * tesselatedBlockSize, z));
-                    }
-                }
-                sides++;
-            }
+                int vertsPerRow = TesselationScale + 1;
+                bool existingHasCorrectSize = existing != null && existing.Vertices.Count == vertsPerRow * vertsPerRow;
 
-            if (HaveUp)
-            {
-                for (int i = 0; i < TesselationScale + 1; i++)
+                for (int i = 0; i <= TesselationScale; i++)
                 {
-                    for (int j = 0; j < TesselationScale + 1; j++)
+                    for (int j = 0; j <= TesselationScale; j++)
                     {
-                        Vertices.Add(new Vector3(x + j * tesselatedBlockSize,
-                            y + i * tesselatedBlockSize, z + blockSize));
+                        Vector3 vertex;
+
+                        if (existingHasCorrectSize)
+                        {
+                            vertex = existing.Vertices[i * vertsPerRow + j];
+                        }
+                        else
+                        {
+                            vertex = vertexFunc(i, j);
+                        }
+
+                        face.Vertices.Add(vertex);
+                        face.UVs.Add(new Vector2((float)j / TesselationScale, (float)i / TesselationScale));
                     }
                 }
-                sides++;
+
+                newFaces.Add(face);
             }
+            AddFace(FaceDirection.Up,
+                (i, j) => new Vector3(
+                    x + j * tesselatedBlockSize,  
+                    y + blockSize,                  
+                    z + (TesselationScale - i) * tesselatedBlockSize 
+                ),
+                HaveTop);
+
+            AddFace(FaceDirection.North,
+                (i, j) => new Vector3(
+                    x + j * tesselatedBlockSize,
+                    y + i * tesselatedBlockSize,
+                    z + blockSize
+                ),
+                HaveUp);
+
+            AddFace(FaceDirection.South,
+                (i, j) => new Vector3(
+                    x + (TesselationScale - j) * tesselatedBlockSize,
+                    y + i * tesselatedBlockSize,
+                    z
+                ),
+                HaveDown);
+
+            AddFace(FaceDirection.West,
+                (i, j) => new Vector3(
+                    x,
+                    y + i * tesselatedBlockSize,
+                    z + (TesselationScale - j) * tesselatedBlockSize
+                ),
+                HaveLeft);
+
+            AddFace(FaceDirection.East,
+                (i, j) => new Vector3(
+                    x + blockSize,
+                    y + i * tesselatedBlockSize,
+                    z + j * tesselatedBlockSize
+                ),
+                HaveRight);
+
+            blockFaces = newFaces;
         }
 
-        public List<int> CreateTriangles(int indexOffset)
+        public List<int> CreateTrianglesForFace(BlockFace face, int vertexOffset)
         {
-            Triangles.Clear();
+            int tesselation = GameConstants.tessellationScale;
+            int vertsPerRow = tesselation + 1;
+            var triangles = new List<int>(tesselation * tesselation * 6);
 
-            if (IsDestroyed) return Triangles; // if destroyed, return empty list.
-
-            int col;
-            for (int i = 0; i < sides; i++)
+            for (int i = 0; i < tesselation; i++)
             {
-                var sideOffset = i * (TesselationScale + 1) * (TesselationScale + 1);
-                for (int j = 0; j < TesselationScale; j++)
-                {
-                    for (int k = 0; k < TesselationScale; k++)
-                    {
-                        col = j * (TesselationScale + 1) + k + sideOffset;
-                        Triangles.Add(col + indexOffset);
-                        Triangles.Add(col + 1 + indexOffset);
-                        Triangles.Add(col + TesselationScale + 1 + indexOffset);
+                int rowStart = i * vertsPerRow;
+                int nextRowStart = (i + 1) * vertsPerRow;
 
-                        Triangles.Add(col + TesselationScale + 1 + indexOffset);
-                        Triangles.Add(col + 1 + indexOffset);
-                        Triangles.Add(col + TesselationScale + 2 + indexOffset);
+                for (int j = 0; j < tesselation; j++)
+                {
+                    int a = rowStart + j + vertexOffset;
+                    int b = a + 1;
+                    int d = nextRowStart + j + vertexOffset;
+                    int c = d + 1;
+
+                    switch (face.Direction)
+                    {
+                        case FaceDirection.Up:
+                        case FaceDirection.North:
+                        case FaceDirection.South:
+                            triangles.Add(a); triangles.Add(b); triangles.Add(d);
+                            triangles.Add(b); triangles.Add(c); triangles.Add(d);
+                            break;
+
+                        case FaceDirection.West:
+                        case FaceDirection.East:
+                            triangles.Add(a); triangles.Add(d); triangles.Add(b);
+                            triangles.Add(b); triangles.Add(d); triangles.Add(c);
+                            break;
                     }
                 }
             }
 
-            return Triangles;
-        }
-
-        /* private void SetUVs()
-         {
-             uvs.Add(new Vector2(0, 0));
-             uvs.Add(new Vector2(0, 1));
-             uvs.Add(new Vector2(1, 0));
-             uvs.Add(new Vector2(1, 1));
-
-             uvs.Add(new Vector2(0, 0));
-             uvs.Add(new Vector2(0, 1));
-             uvs.Add(new Vector2(1, 0));
-             uvs.Add(new Vector2(1, 1));
-
-             uvs.Add(new Vector2(0, 0));
-             uvs.Add(new Vector2(1, 0));
-             uvs.Add(new Vector2(0, 1));
-             uvs.Add(new Vector2(1, 1));
-
-
-             //
-             uvs.Add(new Vector2(0, 0));
-             uvs.Add(new Vector2(1, 0));
-             uvs.Add(new Vector2(0, 1));
-             uvs.Add(new Vector2(1, 1));
-
-             uvs.Add(new Vector2(0, 0));
-             uvs.Add(new Vector2(1, 0));
-             uvs.Add(new Vector2(0, 1));
-             uvs.Add(new Vector2(1, 1));
-         }*/
-        private void SetUVs(int tesselationScale)
-        {
-            // Wyczyść listę UVs, aby uniknąć dublowania
-            uvs.Clear();
-
-            // Oblicz odstęp między punktami UV na podstawie tessalacji
-            float uvStep = 1f / tesselationScale;
-
-            // Iteruj przez wszystkie wierzchołki
-            for (int i = 0; i < Vertices.Count; i++)
-            {
-                // Oblicz współrzędne UV na podstawie indeksu wierzchołka
-                float u = (i % (tesselationScale + 1)) * uvStep;
-                float v = (i / (tesselationScale + 1)) * uvStep;
-
-                // Dodaj punkt UV do listy
-                uvs.Add(new Vector2(u, v));
-            }
-        }
-
-        public float DistanceToPlayer; // move to grid
-
-        public Matrix4x4 matrix
-        {
-            get { return Matrix4x4.TRS(Position, Rotation, Scale); }
-        }
-
-        public void CalculateDistance()
-        {
-            Vector3 playerPos = PlayerFacade.instance.transform.position + Vector3.up * 2;
-            DistanceToPlayer = Vector3.Distance(playerPos, Position);
+            return triangles;
         }
 
         public int TakeDamage(int incommingDmg)
         {
             int leftOverDamage = incommingDmg - Health;
-            if(leftOverDamage < 0) leftOverDamage = 0;
+            if (leftOverDamage < 0) leftOverDamage = 0;
 
             Health -= incommingDmg;
             if (Health < 0) { IsDestroyed = true; }
             return leftOverDamage;
         }
-
-        }
     }
+}

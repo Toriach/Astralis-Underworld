@@ -61,7 +61,6 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map
 
                 skipped = 0;
                 CheckForOutOfRangeCells();
-                UpdateColliders();
             }
         }
 
@@ -72,7 +71,6 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map
             {
                 if (_usedColliders[i].Cell.GetDistanceToPlayer() > rangeForCells || _usedColliders[i].Cell.IsEmpty)
                 {
-                    _usedColliders[i].Cell.HaveAsignedCollider = false;
                     _usedColliders[i].Cell = null;
                     _usedColliders[i].CellCollider.Cell = null;
                     _usedColliders[i].ColliderGO.transform.position = new Vector3(0,100,0);
@@ -84,39 +82,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map
             _usedColliders = _usedColliders.Except<CellAndCollider>(_toRemoveList).ToList();
         }
 
-        private void UpdateColliders()
-        {
-            for (int i = 0; i < _cellsInRange.Count; i++)
-            {
-                if (_cellsInRange[i].HaveAsignedCollider) continue;
-   
-                AssignCollider(_cellsInRange[i]);
-            }
-        }
 
-        private void AssignCollider(GridCell cell)
-        {
-            CellAndCollider newPair = GetFreeCollider();
-
-            cell.HaveAsignedCollider = true;
-
-            newPair.Cell = cell;
-            newPair.CellCollider.Cell = cell;
-            newPair.SetPosition(_offset);
-
-            _usedColliders.Add(newPair);
-        }
-
-        private CellAndCollider GetFreeCollider()
-        {
-            if (_freeColliders.Count <= 0)
-            {
-                SpawnColliders(1);
-            }
-            CellAndCollider freeCollider = _freeColliders[0];
-            _freeColliders.Remove(freeCollider);
-            return freeCollider;
-        }
         [System.Serializable]
         private class CellAndCollider
         {

@@ -7,7 +7,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
     public static class GridCellDataGenerator
     {
         public static GridCell GenerateGridCellData(string newCellName, Vector3 cellPosition, float offsetX,
-            float offsetY, int cellXIndex, int cellZIndex, int tesselationScale)
+            float offsetY, int cellXIndex, int cellZIndex, int tesselationScale, Vector3 parentChunkPosition)
         {
             BlockData[] blocks = new BlockData[GameConstants.VerticalBlocksInChunk];
             for (var i = 0; i < blocks.Length; i++)
@@ -22,7 +22,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             }
 
             cellPosition = new Vector3(cellPosition.x - 0.25f, cellPosition.y - 0.25f, cellPosition.z - 0.25f);
-            var newGridCell = new GridCell(newCellName, cellPosition, blocks);
+            var newGridCell = new GridCell(newCellName, cellPosition, blocks, parentChunkPosition);
 
             return newGridCell;
         }

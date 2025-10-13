@@ -9,7 +9,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
 
         public void Hit()
         {
-            Cell.DestroyBlocksFromTop(Random.Range(1, 3));
+        //   Cell.DestroyBlocksFromTop(Random.Range(1, 3));
         }
     }
 }
