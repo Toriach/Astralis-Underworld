@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 40218212808973972}
   - component: {fileID: 7593121200541446045}
-  - component: {fileID: 6663763149946999905}
   m_Layer: 0
   m_Name: GridMap
   m_TagString: Untagged
@@ -50,19 +49,3 @@ MonoBehaviour:
   GridsNearPlayer: []
   RegionPlayerIsIn: {fileID: 0}
   ChunkPlayerIsIn: {fileID: 0}
---- !u!114 &6663763149946999905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8888345062685882369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f72464e231a386c4b85206b55bab093d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rangeForChunk: 3
-  rangeForCells: 3
-  objectWithCollider: {fileID: 5419702783713838156, guid: 76d5d9200f4b6f54181a927a1e9f82df,
-    type: 3}

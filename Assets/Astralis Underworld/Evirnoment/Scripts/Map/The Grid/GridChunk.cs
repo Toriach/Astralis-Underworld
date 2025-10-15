@@ -1,4 +1,5 @@
-﻿using Assets.Astralis_Underworld.Scripts;
+﻿using Assets.Astralis_Underworld.Entities.Player.Scripts;
+using Assets.Astralis_Underworld.Scripts;
 using Astralis_Underworld.Evirnoment;
 using System;
 using System.Collections.Generic;
@@ -19,32 +20,36 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
         public Vector3 ChunkCenterPosition;
 
         public List<Vector3> blocksVerts;
-
-        //public List<List<int>> GroupedVertices;
+        public Dictionary<int, List<int>> GroupedVertsIndices;
         public List<int> blocksTriangles;
         public List<Vector2> blocksUvs;
 
         public int TesselationScale = 1;
         public bool RecreateUpdate = false;
 
-        private int _chunkSize;
         private float _gridSize;
         private float _chunkLocalX;
         private float _chunkLocalY;
-        private ChunkBlocksDrawer _chunkBlocksDrawer;
-        private List<Matrix4x4[]> blockMatrixlist;
-
-        private int _frameSkipped = 0;
 
         private MeshFilter _filter;
         private MeshRenderer _renderer;
         private Mesh _mesh;
         private MeshCollider _meshCollider;
-        private List<List<int>> indexesInDistance;
 
+        // DEBUG AREA
+
+        [System.Serializable]
+        public class indexGroup
+        {
+            public int key;
+            public List<int> values = new List<int>();
+        }
+        [SerializeField]
+        private List<indexGroup> groupedVertsView = new List<indexGroup>();
+
+        ///
         private void Awake()
         {
-            _chunkBlocksDrawer = GetComponent<ChunkBlocksDrawer>();
             _filter = GetComponent<MeshFilter>();
             _renderer = GetComponent<MeshRenderer>();
             _renderer.sharedMaterial = BlockMaterialReferenceSingleton.instance.materials[0];
@@ -59,7 +64,6 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
         public void SetNewChunk(string newChunkName, Vector3 chunkPosition, float chunkLocalX, float chunkLocalY)
         {
             ChunkName = newChunkName;
-            _chunkSize = GameConstants.GetChunkSize();
             _gridSize = GameConstants.GridSize;
             gameObject.name = ChunkName;
             gameObject.transform.position = chunkPosition;
@@ -73,9 +77,6 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
 
             Cells = new List<GridCell>();
 
-            indexesInDistance = new List<List<int>>();
-            blockMatrixlist = new List<Matrix4x4[]>();
-
             CellTable = new GridCell[GameConstants.ChunkSizeInBlocks, GameConstants.ChunkSizeInBlocks];
 
             CreateGridCells();
@@ -87,7 +88,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             blocksVerts = new List<Vector3>();
             blocksTriangles = new List<int>();
             blocksUvs = new List<Vector2>();
-
+            GroupedVertsIndices = new Dictionary<int, List<int>>();
             TesselationScale = GameConstants.tessellationScale;
             GenerateMesh();
         }
@@ -139,8 +140,14 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
                 cell.UpdateVerticesInBlocks(TesselationScale);
             }
 
-          //  ModifyVertsOnCellBlocks();
+            //  ModifyVertsOnCellBlocks(); // TODO
             GenerateChunkMesh();
+        }
+
+        public void UpdateChunk()
+        {
+            GenerateMesh();
+            GroupVertsByPosition(blocksVerts);
         }
 
         private void GenerateChunkMesh()
@@ -175,8 +182,9 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
                 }
             }
 
+            _mesh.MarkDynamic();
             _mesh.vertices = blocksVerts.ToArray();
-            _mesh.triangles = blocksTriangles.ToArray();
+            _mesh.triangles = blocksTriangles.ToArray(); // if blocks count changed/ save memory!
 
             if (_mesh.triangles.Length > 0)
             {
@@ -191,6 +199,43 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             }
 
             _meshCollider.sharedMesh = _mesh;
+        }
+
+        private void GroupVertsByPosition(List<Vector3> verts, float tolerance = 0.001f)
+        {
+            GroupedVertsIndices.Clear();
+
+            var remaining = new List<int>(Enumerable.Range(0, verts.Count));
+
+            while (remaining.Count > 0)
+            {
+                int currentIndex = remaining[0];
+                Vector3 current = verts[currentIndex];
+                var group = new List<int>();
+
+                for (int i = remaining.Count - 1; i >= 0; i--)
+                {
+                    int index = remaining[i];
+                    if (Vector3Utils.ApproximatelyEqual(verts[index], current, tolerance))
+                    {
+                        group.Add(index);
+                        remaining.RemoveAt(i);
+                    }
+                }
+
+                if (!GroupedVertsIndices.ContainsKey(currentIndex))
+                    GroupedVertsIndices[currentIndex] = group;
+            }
+            UpdateDebugView();
+        }
+
+        private void UpdateDebugView()
+        {
+            groupedVertsView.Clear();
+            foreach (var kvp in GroupedVertsIndices)
+            {
+                groupedVertsView.Add(new indexGroup { key = kvp.Key, values = new List<int>(kvp.Value) });
+            }
         }
 
         private void ModifyVertsOnCellBlocks()
@@ -219,6 +264,54 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
                     }
                 }
             }
+        }
+
+        public void DeformOnHit(Vector3 hitPointPos, float miningRadius)
+        {
+            float maxDistance = 2f;
+            Vector3 playerPos = PlayerFacade.instance.transform.position;
+
+            //  float lowestDist = 150;
+            //  float furthestDist = 0;
+
+            foreach (var kvp in GroupedVertsIndices)
+            {
+                int key = kvp.Key;
+                List<int> indexes = kvp.Value;
+                /*                float distanceFactor = 1 - (distanceToPlayer / maxDistance);
+
+                                float adjustedMiningPower = dispPower * distanceFactor;
+                                var modifiedPlayerPos = playerPos;
+                                modifiedPlayerPos.y += downOffset;*/
+
+                /*                var direction = vertexPosition - modifiedPlayerPos;
+
+                                direction.Normalize();
+                                var displacement = direction * adjustedMiningPower;
+                                face.Vertices[i] += displacement;*/
+
+
+                var vertPos = blocksVerts[indexes[0]] + ChunkPosition;
+                float distance = Vector3.Distance(vertPos, playerPos);
+
+                //   if(distance > furthestDist) furthestDist = distance;
+                //  if(distance < lowestDist) lowestDist = distance;
+
+                if (distance > maxDistance) continue;
+
+                var direction = vertPos - playerPos;
+
+                direction.Normalize();
+
+                foreach (var vertexIndex in indexes)
+                {
+                    blocksVerts[vertexIndex] += direction;
+                }
+                Debug.DrawRay(vertPos, Vector3.up * 2, Color.red, 0.1f);
+            }
+            // Debug.Log(lowestDist + " " + furthestDist);
+            Debug.Break();
+
         }
 
         /*        private void RemoveRandomCell()
@@ -339,5 +432,6 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
             // Return the list of cells within the specified distance
             return cellsInDistance;
         }
+
     }
 }

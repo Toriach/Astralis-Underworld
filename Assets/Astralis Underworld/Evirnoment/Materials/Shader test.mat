@@ -8,7 +8,8 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Shader test
-  m_Shader: {fileID: -6465566751694194690, guid: 4f03e090f823e194a8710fe149803097, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 4f03e090f823e194a8710fe149803097,
+    type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -23,6 +24,7 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - SRPDEFAULTUNLIT
+  - MOTIONVECTORS
   m_LockedProperties: _Metallic _MetallicGlossMap
   m_SavedProperties:
     serializedVersion: 3
@@ -314,6 +316,7 @@ Material:
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _UnityShadowColor: {r: 0.85023, g: 0.85034, b: 0.85045, a: 0.85056}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &966972216943193811
 MonoBehaviour:
   m_ObjectHideFlags: 11
@@ -326,4 +329,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 10

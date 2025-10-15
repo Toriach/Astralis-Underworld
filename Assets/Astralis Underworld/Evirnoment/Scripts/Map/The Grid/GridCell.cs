@@ -63,7 +63,7 @@ namespace Assets.Astralis_Underworld.Evirnoment.Scripts.Map.The_Grid
                 if (damage == 0) break;
 
                 damage = blocks[i].TakeDamage(damage);
-                DeformVertsAfterHit(blocks[i]);
+               // DeformVertsAfterHit(blocks[i]);
             }
             CheckDestroyedBlocks();
         }

@@ -65,7 +65,8 @@ namespace Assets.Astralis_Underworld.Entities.Player.Scripts
 
             foreach (var chunk in chunks)
             {
-                chunk.GenerateMesh();
+                chunk.DeformOnHit(_hitPointPos, miningRadius);
+                chunk.UpdateChunk();
             }
         }
         public List<GridCell> GetCellsInMiningDistance(List<GridChunk> chunks, float distance)
